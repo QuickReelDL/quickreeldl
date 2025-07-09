@@ -6,7 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Your personal Apify API token
-const APIFY_TOKEN = process.env.APIFY_TOKEN;
+const APIFY_TOKEN = process.env.API_TOKEN;
 app.use(cors());
 app.use(express.json());
 
