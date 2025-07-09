@@ -44,7 +44,7 @@
   <script>
     async function fetchPreview() {
       const link = document.getElementById("igLink").value;
-      const response = await fetch("https://your-backend.onrender.com/api/preview", {
+      fetch("https://quickreeldl.onrender.com/api/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: link })
