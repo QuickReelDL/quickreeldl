@@ -16,36 +16,39 @@ app.post("/api/preview", async (req, res) => {
   }
 
   try {
-    const response = await fetch("https://snapinsta.io/api/ajaxSearch", {
+    const response = await fetch("https://snapinsta.app/api/ajaxSearch", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Origin": "https://snapinsta.io",
-        "Referer": "https://snapinsta.io/en",
+        "Origin": "https://snapinsta.app",
+        "Referer": "https://snapinsta.app/en",
         "User-Agent": "Mozilla/5.0"
       },
       body: new URLSearchParams({
         q: url,
         t: "media",
         lang: "en"
-      })
+      }),
     });
 
     const html = await response.text();
 
+    // Attempt to extract video URL
     const match = html.match(/href="(https:\/\/[^"]+\.mp4)"/);
-    if (!match) return res.status(404).json({ error: "Video not found" });
-
-    const videoUrl = match[1];
+    if (!match || !match[1]) {
+      return res.status(404).json({ error: "No video found in SnapInsta response." });
+    }
 
     return res.json({
       title: "Instagram Reel",
-      videoUrl
+      videoUrl: match[1]
     });
   } catch (err) {
-    console.error("SnapInsta error:", err);
-    res.status(500).json({ error: "SnapInsta API failed" });
+    console.error("SnapInsta request failed:", err);
+    res.status(500).json({ error: "Backend crashed. Check SnapInsta or try another API." });
   }
 });
 
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
