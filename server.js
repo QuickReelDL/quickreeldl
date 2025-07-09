@@ -5,6 +5,9 @@ const fetch = require("node-fetch");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Your personal Apify API token
+const APIFY_TOKEN = process.env.APIFY_TOKEN;
+
 app.use(cors());
 app.use(express.json());
 
@@ -16,39 +19,32 @@ app.post("/api/preview", async (req, res) => {
   }
 
   try {
-    const response = await fetch("https://snapinsta.app/api/ajaxSearch", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Origin": "https://snapinsta.app",
-        "Referer": "https://snapinsta.app/en",
-        "User-Agent": "Mozilla/5.0"
-      },
-      body: new URLSearchParams({
-        q: url,
-        t: "media",
-        lang: "en"
-      }),
-    });
+    const response = await fetch(
+      `https://api.apify.com/v2/acts/presetshubham~instagram-reel-downloader/run-sync-get-dataset-items?token=${APIFY_TOKEN}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reelLinks: [url],
+          proxyConfiguration: { useApifyProxy: true }
+        })
+      }
+    );
 
-    const html = await response.text();
-
-    // Attempt to extract video URL
-    const match = html.match(/href="(https:\/\/[^"]+\.mp4)"/);
-    if (!match || !match[1]) {
-      return res.status(404).json({ error: "No video found in SnapInsta response." });
+    const results = await response.json();
+    const first = results[0];
+    if (!first || !first.videoUrl) {
+      return res.status(404).json({ error: "Video not found" });
     }
 
     return res.json({
-      title: "Instagram Reel",
-      videoUrl: match[1]
+      title: first.title || "Instagram Reel",
+      videoUrl: first.videoUrl
     });
   } catch (err) {
-    console.error("SnapInsta request failed:", err);
-    res.status(500).json({ error: "Backend crashed. Check SnapInsta or try another API." });
+    console.error("Apify fetch failed:", err);
+    res.status(500).json({ error: "Failed to fetch video from Apify" });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
