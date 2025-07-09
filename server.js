@@ -16,33 +16,36 @@ app.post("/api/preview", async (req, res) => {
   }
 
   try {
-    const response = await fetch("https://instasupersave.com/api/convert", {
+    const response = await fetch("https://snapinsta.io/api/ajaxSearch", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Origin": "https://instasupersave.com",
-        "Referer": "https://instasupersave.com/"
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Origin": "https://snapinsta.io",
+        "Referer": "https://snapinsta.io/en",
+        "User-Agent": "Mozilla/5.0"
       },
-      body: JSON.stringify({ url })
+      body: new URLSearchParams({
+        q: url,
+        t: "media",
+        lang: "en"
+      })
     });
 
-    const data = await response.json();
+    const html = await response.text();
 
-    const videoUrl = data?.media?.[0]?.url;
-    if (!videoUrl) {
-      return res.status(404).json({ error: "Video not found" });
-    }
+    const match = html.match(/href="(https:\/\/[^"]+\.mp4)"/);
+    if (!match) return res.status(404).json({ error: "Video not found" });
+
+    const videoUrl = match[1];
 
     return res.json({
       title: "Instagram Reel",
       videoUrl
     });
   } catch (err) {
-    console.error("API fetch failed:", err);
-    return res.status(500).json({ error: "Failed to fetch video" });
+    console.error("SnapInsta error:", err);
+    res.status(500).json({ error: "SnapInsta API failed" });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
